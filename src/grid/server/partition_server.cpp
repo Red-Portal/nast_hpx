@@ -65,8 +65,8 @@ partition_server::partition_server(io::config const& cfg)
                     obstacle_cells_.emplace_back(i, j, k);
             }
 
-    fluid_stride = fluid_cells_.size() / c.threads + (fluid_cells_.size() % c.threads > 0);
-    obstacle_stride = obstacle_cells_.size() / c.threads + (obstacle_cells_.size() % c.threads > 0);
+    fluid_stride = fluid_cells_.size() + (fluid_cells_.size() > 0);
+    obstacle_stride = obstacle_cells_.size() + (obstacle_cells_.size() > 0);
 }
 
 void partition_server::init()
@@ -84,9 +84,10 @@ void partition_server::init()
     std::vector<hpx::future<hpx::id_type > > parts =
         hpx::find_all_from_basename(partition_basename, c.num_localities);
 
-    ids_ = hpx::when_all(parts).then(hpx::util::unwrapping_n<2>(
-                                         [](std::vector<hpx::id_type>&& ids) -> std::vector<hpx::id_type>
-        { return ids;})
+    ids_ = hpx::when_all(parts)
+        .then(hpx::util::unwrapping_n<2>(
+                  [](std::vector<hpx::id_type>&& ids) -> std::vector<hpx::id_type>
+                  { return ids;})
             ).get();
 
     if (!is_left_)

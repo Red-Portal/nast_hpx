@@ -1,6 +1,8 @@
 #include "io/config.hpp"
 #include "stepper/stepper.hpp"
 
+#include <iostream>
+#include <chrono>
 #include <hpx/hpx_init.hpp>
 #include <hpx/hpx.hpp>
 
@@ -66,30 +68,21 @@ int hpx_main(boost::program_options::variables_map& vm)
     for (std::size_t iter = 0; iter < iterations; ++iter)
     {
         hpx::util::high_resolution_timer t;
-
+        auto start = std::chrono::steady_clock::now(); 
         step.run();
+        auto stop = std::chrono::steady_clock::now(); 
 
         double elapsed = t.elapsed();
+        std::cout << "iteration " << iter
+                  << " elapsed " << std::chrono::duration_cast<
+                      std::chrono::duration<double, std::ratio<1>>>(stop - start).count()
+                  << "s" << std::endl;
 
         if (iter > 0 || iterations == 1)
         {
             avgtime += elapsed;
             maxtime = std::max(maxtime, elapsed);
             mintime = std::min(mintime, elapsed);
-
-            /*
-            for (std::size_t loc = 0; loc < num_localities; ++loc)
-            {
-                std::size_t idle_rate = idle_rate_counters[loc].get_value<std::size_t>().get();
-
-                avg_idle_rates[loc] += idle_rate;
-                max_idle_rates[loc] = std::max(max_idle_rates[loc], idle_rate);
-                min_idle_rates[loc] = std::min(min_idle_rates[loc], idle_rate);
-
-                avgidlerate += idle_rate;
-                maxidlerate = std::max(maxidlerate, idle_rate);
-                minidlerate = std::min(minidlerate, idle_rate);
-            }*/
         }
     }
 
@@ -98,27 +91,9 @@ int hpx_main(boost::program_options::variables_map& vm)
         avgtime = avgtime / static_cast<double>(
                     (std::max)(iterations-1, static_cast<boost::uint64_t>(1)));
 
-       /* avgidlerate = avgidlerate / static_cast<double>(
-                    (std::max)(iterations-1, static_cast<boost::uint64_t>(1)))
-                    / num_localities;
-
-        for (std::size_t loc = 0; loc < num_localities; ++loc)
-            avg_idle_rates[loc] = avg_idle_rates[loc] / static_cast<double>(
-                    (std::max)(iterations-1, static_cast<boost::uint64_t>(1)));*/
-
-        std::cout
-            << "Avg time (s):\t" << avgtime << "\n"
-            << "Min time (s):\t" << mintime << "\n"
-            << "Max time (s):\t" << maxtime << "\n";
-         /*   << "Avg idle rate:\t" << avgidlerate << "\n"
-            << "Min idle rate:\t" << minidlerate << "\n"
-            << "Max idle rate:\t" << maxidlerate << "\n";*/
-
-       /* for (std::size_t loc = 0; loc < num_localities; ++loc)
-           std::cout
-            << "Avg idle rate (" << loc << "):\t" << avg_idle_rates[loc] << "\n"
-            << "Min idle rate (" << loc << "):\t" << min_idle_rates[loc] << "\n"
-            << "Max idle rate (" << loc << "):\t" << max_idle_rates[loc] << "\n";*/
+        std::cout << "Avg time (s):\t" << avgtime << "\n"
+                  << "Min time (s):\t" << mintime << "\n"
+                  << "Max time (s):\t" << maxtime << "\n";
 
         std::cout << std::endl;
 
