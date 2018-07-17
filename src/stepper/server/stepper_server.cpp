@@ -48,9 +48,9 @@ void stepper_server::setup(io::config const& cfg)
     std::vector<hpx::future<hpx::id_type > > steps =
         hpx::find_all_from_basename(stepper_basename, num_localities);
 
-    localities = hpx::when_all(steps).then(hpx::util::unwrapped2(
-                [](std::vector<hpx::id_type>&& ids) -> std::vector<hpx::id_type>
-                { return ids;})
+    localities = hpx::when_all(steps).then(hpx::util::unwrapping_n<2>(
+                                               [](std::vector<hpx::id_type>&& ids) -> std::vector<hpx::id_type>
+        { return ids;})
             ).get();
 }
 
@@ -80,7 +80,7 @@ void stepper_server::run()
                                         num_localities, step);
 
             max_velocities.then(
-                hpx::util::unwrapped(
+                hpx::util::unwrapping(
                     [=, &t](std::vector<triple<double> > local_max_uvws)
                     {
                         triple<double> global_max_uvw(0);

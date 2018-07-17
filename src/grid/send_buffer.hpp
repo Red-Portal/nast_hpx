@@ -11,7 +11,6 @@ namespace nast_hpx { namespace grid {
     template <typename BufferType, direction dir, typename Action>
     struct send_buffer
     {
-        HPX_MOVABLE_ONLY(send_buffer);
     public:
         typedef hpx::lcos::local::spinlock mutex_type;
 

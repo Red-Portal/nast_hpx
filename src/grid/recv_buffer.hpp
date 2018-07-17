@@ -11,7 +11,6 @@ namespace nast_hpx { namespace grid {
     template <typename BufferType, direction dir>
     struct recv_buffer
     {
-        HPX_MOVABLE_ONLY(recv_buffer);
     public:
         typedef hpx::lcos::local::spinlock mutex_type;
 

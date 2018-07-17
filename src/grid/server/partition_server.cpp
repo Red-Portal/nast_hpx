@@ -84,9 +84,9 @@ void partition_server::init()
     std::vector<hpx::future<hpx::id_type > > parts =
         hpx::find_all_from_basename(partition_basename, c.num_localities);
 
-    ids_ = hpx::when_all(parts).then(hpx::util::unwrapped2(
-                [](std::vector<hpx::id_type>&& ids) -> std::vector<hpx::id_type>
-                { return ids;})
+    ids_ = hpx::when_all(parts).then(hpx::util::unwrapping_n<2>(
+                                         [](std::vector<hpx::id_type>&& ids) -> std::vector<hpx::id_type>
+        { return ids;})
             ).get();
 
     if (!is_left_)
@@ -951,7 +951,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
     {
         compute_fg_futures[thread] =
             hpx::dataflow(
-                hpx::util::unwrapped(
+                hpx::util::unwrapping(
                     hpx::util::bind(
                         &stencils<STENCIL_COMPUTE_FG>::call,
                         boost::ref(data_[F]), boost::ref(data_[G]), boost::ref(data_[H]),
@@ -1013,7 +1013,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
     {
         compute_rhs_futures[thread] =
                 hpx::dataflow(
-                    hpx::util::unwrapped(
+                    hpx::util::unwrapping(
                         hpx::util::bind(
                             &stencils<STENCIL_COMPUTE_RHS>::call,
                             boost::ref(rhs_data_),
@@ -1042,7 +1042,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
         {
             set_p_futures[thread] =
                 hpx::dataflow(
-                    hpx::util::unwrapped(
+                    hpx::util::unwrapping(
                         hpx::util::bind(
                             &stencils<STENCIL_SET_P_OBSTACLE>::call,
                             boost::ref(data_[P]),
@@ -1067,7 +1067,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
         {
             solver_cycle_futures[thread] =
                 hpx::dataflow(
-                    hpx::util::unwrapped(
+                    hpx::util::unwrapping(
                         hpx::util::bind(
                             &stencils<STENCIL_JACOBI>::call,
                             boost::ref(data_[P]),
@@ -1093,13 +1093,13 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
         {
             compute_res_futures[thread] =
                 hpx::dataflow(
-                    hpx::util::unwrapped(
-                            hpx::util::bind(
-                                &stencils<STENCIL_COMPUTE_RESIDUAL>::call,
-                                boost::ref(data_[P]),
-                                boost::ref(rhs_data_),
-                                beginFluid, endFluid,
-                                c.dx_sq, c.dy_sq, c.dz_sq, token
+                    hpx::util::unwrapping(
+                        hpx::util::bind(
+                            &stencils<STENCIL_COMPUTE_RESIDUAL>::call,
+                            boost::ref(data_[P]),
+                            boost::ref(rhs_data_),
+                            beginFluid, endFluid,
+                            c.dx_sq, c.dy_sq, c.dz_sq, token
                             )
                         )
                         , static_cast<hpx::future<void> >(hpx::when_all(solver_cycle_futures))
@@ -1117,7 +1117,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
 
         hpx::future<double> local_residual =
             hpx::dataflow(
-                hpx::util::unwrapped(
+                hpx::util::unwrapping(
                     [num_fluid_cells = c.num_fluid_cells](std::vector<double> residuals)
                     -> double
                     {
@@ -1140,7 +1140,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
                                             c.num_localities, step_ * c.iter_max + iter, 0);
 
                 partial_residuals.then(
-                    hpx::util::unwrapped(
+                    hpx::util::unwrapping(
                         [dt, iter_int = iter, step = step_, t = t_, this](std::vector<double> local_residuals)
                         {
                             double residual = 0;
@@ -1182,7 +1182,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
     {
        local_max_uvs[thread] =
             hpx::dataflow(
-                hpx::util::unwrapped(
+                hpx::util::unwrapping(
                     hpx::util::bind(
                         &stencils<STENCIL_UPDATE_VELOCITY>::call,
                         boost::ref(data_[U]), boost::ref(data_[V]), boost::ref(data_[W]),
@@ -1202,7 +1202,7 @@ hpx::future<triple<double> > partition_server::do_timestep(double dt)
 
     hpx::future<triple<double> > local_max_uv =
         hpx::dataflow(
-            hpx::util::unwrapped(
+            hpx::util::unwrapping(
                 [](std::vector<triple<double> > max_uvs)
                 -> triple<double>
                 {
