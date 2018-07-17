@@ -18,7 +18,7 @@ def reverse_enumerate(iterable):
     """
     Enumerate over an iterable in reverse order while retaining proper indexes
     """
-    return itertools.izip(reversed(xrange(len(iterable))), reversed(iterable))
+    return zip(reversed(range(len(iterable))), reversed(iterable))
 
 
 class grid:	
@@ -51,7 +51,7 @@ class grid:
 			for j, row in enumerate(plane):
 			  output += str(row)
 			  if j != len(plane) - 1:
-				output += "\n"
+			        output += "\n"
 				
 			output += "\n"
 			output += "\n"
@@ -65,7 +65,7 @@ class grid:
 					self[i, j, k] = 0
 		
 	def write_to(self, file_path):
-		with open(file_path, 'wb') as csvfile:
+		with open(file_path, 'w') as csvfile:
 			csvfile.write(str(self.__i_max)+'\n')
 			csvfile.write(str(self.__j_max)+'\n')
 			csvfile.write(str(self.__k_max)+'\n')
